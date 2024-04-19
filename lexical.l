@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> 
 #include <string.h>
 #include "syntaxique.tab.h"
 #include "TS.h"
@@ -8,15 +8,14 @@
 extern YYSTYPE yylval;
 int col= 0 ;
 int line = 1;
+int j;
 %}
 
 %option noyywrap
-%option yylineno
-%option case-insensitive
+/*%option yylineno*/
+/*%option case-insensitive*/
 
 chiffre [0-9]
-lettreMAJ [A-Z]
-lettreMIN [a-z]
 char \"[^"]*\"
 IDF [a-zA-Z][a-z0-9]*
 NBRINTEGER ({chiffre}+|\([+|-]{chiffre}+\))
@@ -32,8 +31,6 @@ printf("%s Type\n",yytext); col+=yyleng; yylval.str = strdup(yytext);return INT_
 printf("%s Type\n",yytext); col+=yyleng; yylval.str = strdup(yytext);return FLOAT_TYPE ;}
 "CHAR" {rechercher(yytext, "Mot cle", " ", "Oui", "1", 1);
 printf("%s Type\n",yytext); col+=yyleng; yylval.str = strdup(yytext);return CHAR_TYPE;}
-"BOOL" {rechercher(yytext, "Mot cle", " ", "Oui", "1", 1);
-printf("%s Type\n",yytext); col+=yyleng; yylval.str = strdup(yytext);return BOOL_TYPE ;}
 "CONST" { rechercher(yytext, "Mot cle", " ", "Oui", "1", 1);
 printf("%s Mot cle\n",yytext); col+=yyleng; yylval.str = strdup(yytext); return CONST ;}
 "IF" { rechercher(yytext, "Mot cle", " ", "Oui", "1", 1);
@@ -63,17 +60,52 @@ printf("%s Mot cle\n",yytext);  col+=yyleng; yylval.str = strdup(yytext);return 
           printf("Erreur lexicale ligne %d, colonne %d -IDF trop long-\n",line,col);
       }
 {NBRINTEGER} {
-          if (atoi(yytext)>=(-32768) && atoi(yytext)<=(32768))
-            {printf("%s Entier\n",yytext); col+=yyleng; yylval.Integer= atoi(yytext); return INTEGER ;}
-          else 
-            printf("Erreur lexicale : %s -hors intervalle- ligne %d, colonne %d \n",yytext,line,col);
-          }
+          char myStr[100]="";
+                            if(yytext[0]=='(')
+                             {
+                             for(j=1;j<yyleng-1;j++)
+                             {
+                              myStr[j-1] =yytext[j];
+                             }
+                            
+                             col=col+ strlen(yytext);
+                             if (atoi(myStr) <(-32768)  || atoi(myStr)>32767  )  {printf("erreur lexical dans la ligne : %d colonne :%d \n",line,col);
+                             break;}
+                              printf("%s est entier signé\n" ,yytext);
+                             yylval.Integer= atoi(myStr);
+                             return INTEGER;
+                             }
+                             else {
+                             col=col+ strlen(yytext);
+                             if (atoi(yytext) <(-32768)  || atoi(yytext)>32767  )  {printf("erreur lexical dans la ligne : %d colonne :%d \n",line,col);
+                             break;}
+                             printf("%s est entier\n" ,yytext);
+                             yylval.Integer= atoi(yytext);
+                             return INTEGER;
+                             }
+                             }
 {NBRFLOAT} {
-          if (atof(yytext)>=(-32768) && atof(yytext)<=(32768))
-            {printf("%s Reel\n",yytext); col+=yyleng; yylval.Reel = atof(yytext); return FLOAT ;}
-          else 
-            printf("Erreur lexicale : %s -hors intervalle- ligne %d, colonne %d \n",yytext,line,col);
-          }
+          char myStr[100]="";
+                             if(yytext[0]=='(')
+                             {
+                             for(j=1;j<yyleng-1;j++)
+                             {
+                              myStr[j-1] =yytext[j];
+                             }
+                             col+=yyleng;
+                             
+                            printf("%s est reel signé\n" ,yytext);
+                             yylval.Reel= atof(myStr);
+                            return FLOAT;
+
+                             }
+                             else{
+                             col+=yyleng;
+                            printf("%s est reel\n" ,yytext); 
+                             yylval.Reel= atof(yytext);
+                             return FLOAT;
+                             }
+                             }
 "&&" {rechercher(yytext, "Separateur", " ", "Non", "1", 2);
 printf("%s Separateur\n",yytext); col+=yyleng; yylval.str = strdup(yytext);return AND;}
 "||" {rechercher(yytext, "Separateur", " ", "Non", "1", 2);
